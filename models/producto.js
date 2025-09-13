@@ -31,6 +31,11 @@ const productoSchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
+    status: {
+        type: Number,
+        default: 1  //1:Activo - 0:Inactivo
+    },
+    
     recommendationPrice: String,
     description: String
 }, {

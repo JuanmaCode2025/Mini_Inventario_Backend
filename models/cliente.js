@@ -29,6 +29,10 @@ const clienteSchema = new mongoose.Schema({
         required: true,
         trim: true
     },
+    status:{
+        type:Number,
+        default: 1
+    },
 
     purchaseHistory: [{
         type: mongoose.Schema.Types.ObjectId,

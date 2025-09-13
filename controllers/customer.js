@@ -3,12 +3,12 @@ import Producto from "../models/producto.js";
 import Venta from "../models/venta.js";
 import mongoose from 'mongoose';
 //import { generarRecomendaciones } from "../api.js";
-import { matchedData } from 'express-validator';
+import { matchedData } from 'express-validator'; // matchedData es una función muy útil de express-validator que extrae solo los datos que pasaron las validaciones y los devuelve en un objeto limpio.
 
 
 export const createCustomer = async (req, res) => {
   try {
-    const cleanData = matchedData(req);
+    const cleanData = matchedData(req); //datos que pasaron bien
     const customer = await Cliente.create(cleanData);
 
     res.status(201).json({
