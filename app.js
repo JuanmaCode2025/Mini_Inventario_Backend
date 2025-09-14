@@ -16,6 +16,7 @@ connectDB(); // Conectar a la base de datos MongoDB
 const app = express(); // Crear la instancia de la aplicación Express
 app.use(express.json()); // Middleware: Permite que Express entienda datos en formato JSON en las peticiones
 app.use(cors()) // Middleware: Habilita CORS para permitir peticiones desde frontends en otros dominios
+app.use(express.static(`public`))
 
 // Configurar las rutas de la API con sus respectivos endpoints
 app.use('/inventario/user', userRoutes);
