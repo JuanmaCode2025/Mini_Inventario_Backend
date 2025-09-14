@@ -4,7 +4,6 @@ import {
     Productlist,
     buscar_producto, 
     product_edit,
-    putActivarProducto,
     delete_producto 
 } from '../controllers/product.js';
 import { validarJWT } from '../middlewares/token.js';
@@ -54,14 +53,6 @@ router.put('/edit/:barcode',
     ],
     product_edit
 );
-
-router.put('/status/:barcode',
-    //validarJWT,
-    [check('barcode').custom(ProductHelpers.existProductByBarcode),
-        validarCampos
-    ],
-    putActivarProducto
-)
 
 router.delete('/eliminar/:barcode',
     // validarJWT,

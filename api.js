@@ -3,8 +3,9 @@ import 'dotenv/config';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+//en proceso
 
-
+import mongoose from "mongoose";
 // Importación de modelos
 import Cliente from "./models/cliente.js";
 import Venta from "./models/venta.js";

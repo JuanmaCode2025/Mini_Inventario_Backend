@@ -3,6 +3,8 @@ import { generarJWT } from '../middlewares/token.js'
 import bcrypt from 'bcryptjs'
 import { loginHelpers } from '../helpers/user.js';
 
+
+
 export const createUsers = async (req, res) => {
     try {
         const { document, name, email, password } = req.body;

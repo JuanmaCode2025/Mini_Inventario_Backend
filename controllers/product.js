@@ -1,9 +1,9 @@
-import Producto from "../models/producto.js";
+import Producto from "../models/producto.js"; 
 import { generarDescripcion, generarRecomendacionPrecio } from "../api.js";
 
 export const create_product = async (req, res) => {
     try {
-        const { barcode, name, details, category, price, stock } = req.body;
+        const { barcode, name,details, category, price, stock } = req.body;
 
         const [iadescripcion, recomendacionIA] = await Promise.all([
             generarDescripcion(name, category, details),
@@ -23,16 +23,16 @@ export const create_product = async (req, res) => {
         });
 
         await producto.save();
-
-        res.status(201).json({
+        
+        res.status(201).json({ 
             msg: "Producto creado correctamente",
-            producto
+            producto 
         });
     } catch (error) {
         console.error(error);
-        res.status(500).json({
+        res.status(500).json({ 
             msg: "Error al crear producto",
-            error: error.message
+            error: error.message 
         });
     }
 };
@@ -46,9 +46,9 @@ export const Productlist = async (req, res) => {
         });
     } catch (error) {
         console.error(error);
-        res.status(500).json({
+        res.status(500).json({ 
             msg: "Error al obtener productos",
-            error: error.message
+            error: error.message 
         });
     }
 };
@@ -59,9 +59,9 @@ export const buscar_producto = async (req, res) => {
         res.status(200).json(product);
     } catch (error) {
         console.error(error);
-        res.status(500).json({
+        res.status(500).json({ 
             msg: "Error al buscar producto",
-            error: error.message
+            error: error.message 
         });
     }
 };
@@ -102,69 +102,34 @@ export const product_edit = async (req, res) => {
             { ...updates, ...needsUpdate },
             { new: true, runValidators: true }
         );
-
+        
         res.status(200).json({
             msg: "Producto actualizado",
             producto: productoActualizado
         });
     } catch (error) {
         console.error(error);
-        res.status(500).json({
+        res.status(500).json({ 
             msg: "Error al actualizar producto",
             error: error.message
         });
     }
 };
 
-export const putActivarProducto = async (req, res) => {
-    const { barcode } = req.params
-    const buscar = await Producto.findOne({ _id: barcode })
-    try {
-        if (!buscar) {
-            res.status(400).json({ msg: "Este producto no existe" })
-        } else {
-            await Producto.findByIdAndUpdate({ _id: barcode }, {
-                status: 1
-            })
-            res.status(200).json({ msg: "Producto activo", buscar })
-        }
-    } catch (error) {
-        res.status(400).json(error)
-    }
-}
-
-const putDesactivarProducto = async (req, res)=>{
-    const {barcode} = req.params
-    const buscar = await Producto.findOne({_id:barcode})
-    try {
-        if (!buscar){
-        res.status(400).json({msg: "Este producto no existe"})
-    }else{
-        await Producto.findByIdAndUpdate({_id:barcode},{
-            estado:0
-        })
-        res.status(200).json({ msg: "Producto inactivo", buscar })
-    }
-    } catch (error) {
-        res.status(400).json(error)
-    }
-    
-}
-
 export const delete_producto = async (req, res) => {
     try {
         const { barcode } = req.params;
-        const productoEliminado = await Producto.findOneAndDelete({
-            barcode: Number(barcode)
+        const productoEliminado = await Producto.findOneAndDelete({ 
+            barcode: Number(barcode) 
         });
-
-        res.status(200).json({
+        
+        res.status(200).json({ 
             msg: "Producto eliminado correctamente",
             barcode: productoEliminado.barcode
         });
     } catch (error) {
         console.error(error);
-        res.status(500).json({
+        res.status(500).json({ 
             msg: "Error al eliminar producto",
             error: error.message
         });
