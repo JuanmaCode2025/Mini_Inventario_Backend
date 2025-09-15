@@ -14,7 +14,7 @@ import { check } from 'express-validator';
 const router = express.Router();
 
 router.post('/createproduct',
-     //validarJWT,
+     validarJWT,
     [
         check('barcode').custom(ProductHelpers.validateBarcode),
         check('name').custom(ProductHelpers.validateName),
@@ -28,12 +28,12 @@ router.post('/createproduct',
 );
 
 router.get('/listar', 
-    // validarJWT,
+    validarJWT,
     Productlist
 );
 
 router.get('/obtener/:barcode',
-    // validarJWT,
+    validarJWT,
     [
         check('barcode').custom(ProductHelpers.existProductByBarcode),
         validarCampos
@@ -42,7 +42,7 @@ router.get('/obtener/:barcode',
 );
 
 router.put('/edit/:barcode',
-    // validarJWT,
+    validarJWT,
     [
         check('barcode').custom(ProductHelpers.existProductByBarcode),
         check('name').optional().custom(ProductHelpers.validateName),

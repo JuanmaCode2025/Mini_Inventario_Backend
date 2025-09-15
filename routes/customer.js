@@ -18,7 +18,7 @@ router.get('/reconmedar',
 
 // Crear cliente
 router.post('/createcustomer', 
-    //validarJWT,
+    validarJWT,
     [
         check('document', 'El documento es requerido').not().isEmpty(),
         check('document').custom(customerHelpers.validateDocument),
@@ -37,13 +37,13 @@ router.post('/createcustomer',
 
 // Listar clientes (con paginación)
 router.get('/lista/listcustomer',
-   // validarJWT,
+ validarJWT,
   listCustomers
 );
 
 // Obtener cliente por ID
 router.get('/getcustomer/:document',  // Cambiado de :id a :document para coincidir con el helper
-    //validarJWT,
+    validarJWT,
     [
         check('document').custom(customerHelpers.existCustomer),
         validarCampos
@@ -53,7 +53,7 @@ router.get('/getcustomer/:document',  // Cambiado de :id a :document para coinci
 
 // Actualizar cliente
 router.put('/putcustomer/:document',  // Cambiado de :id a :document
-    //validarJWT,
+    validarJWT,
     [
         check('document').custom(customerHelpers.existCustomer), // Valida que el documento exista
         check('name').optional().custom(customerHelpers.validateName),
