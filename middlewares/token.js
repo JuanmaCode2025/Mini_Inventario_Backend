@@ -27,7 +27,7 @@ import User from '../models/user.js';
     }
     try {
         const { document } = jwt.verify(token, process.env.JWT_SECRET)
-        let usuario = await User.findOne(document);
+        let usuario = await User.findOne({document});        
         if (!usuario) {
             return res.status(401).json({
                 msg: "Token no válido "//- usuario no existe DB
