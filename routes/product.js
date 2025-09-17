@@ -41,9 +41,10 @@ router.get('/obtener/:barcode',
     buscar_producto
 );
 
-router.put('/edit/:barcode',
+router.put('/edit/:id',
     validarJWT,
     [
+        check('id').notEmpty().withMessage('El id el obigatorio'),
         check('barcode').custom(ProductHelpers.existProductByBarcode),
         check('name').optional().custom(ProductHelpers.validateName),
         check('category').optional().custom(ProductHelpers.validateCategory),

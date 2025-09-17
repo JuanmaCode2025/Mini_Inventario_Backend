@@ -52,9 +52,10 @@ router.get('/getcustomer/:document',  // Cambiado de :id a :document para coinci
 );
 
 // Actualizar cliente
-router.put('/putcustomer/:document',  // Cambiado de :id a :document
+router.put('/putcustomer/:id',  // Cambiado de :id a :document
     validarJWT,
     [
+        check('id').notEmpty().withMessage('El id el obigatorio'),
         check('document').custom(customerHelpers.existCustomer), // Valida que el documento exista
         check('name').optional().custom(customerHelpers.validateName),
         check('email').optional().custom(customerHelpers.validateEmail),

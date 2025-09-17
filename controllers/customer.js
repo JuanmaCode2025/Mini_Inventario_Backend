@@ -90,11 +90,13 @@ export const getCustomer = async (req, res) => {
 };
 
 
+// Controlador para actualizar la información de un cliente
 export const updateCustomer = async (req, res) => {
   try {
-    // Obtener el documento del cliente desde req.customerDB que fue establecido por el helper
+    // Obtenemos el cliente actual desde el middleware (req.customerDB)
     const customer = req.customerDB;
-    
+
+    // Si no se encontró el cliente previamente, responder con error 404
     if (!customer) {
       return res.status(404).json({
         success: false,
@@ -102,31 +104,40 @@ export const updateCustomer = async (req, res) => {
       });
     }
 
+    // matchedData filtra y sanitiza los campos que pasaron las validaciones de express-validator
     const cleanData = matchedData(req);
 
-    // Campos que no se pueden actualizar
+    // _id nunca debe ser actualizado, lo eliminamos por seguridad
     delete cleanData._id;
-    delete cleanData.document;
 
-    const updatedCustomer = await Cliente.findOneAndUpdate(
-      { document: customer.document }, // Buscar por documento
-      cleanData,
-      { new: true, runValidators: true }
-    ).select('-__v -password');
+    // Actualizamos el cliente usando su _id (ya que puede cambiar el document)
+    const updatedCustomer = await Cliente.findByIdAndUpdate(
+      customer._id,           // ID del cliente que no cambia nunca
+      cleanData,              // Datos limpios y validados a actualizar
+      {
+        new: true,            // Retorna el documento actualizado
+        runValidators: true   // Aplica las validaciones del modelo Mongoose
+      }
+    ).select('-__v -password'); // Excluye los campos __v y password en la respuesta
 
+    // Respuesta exitosa con el cliente actualizado
     res.status(200).json({
       success: true,
       message: 'Cliente actualizado correctamente',
       data: updatedCustomer
     });
+
   } catch (error) {
+    // Manejo de errores generales (ej: errores del servidor, base de datos, etc.)
     console.error('Error al actualizar cliente:', error);
+
     res.status(500).json({
       success: false,
       message: 'Error interno del servidor'
     });
   }
 };
+
 
 // Controlador para eliminar un cliente de la base de datos
 export const deleteCustomer = async (req, res) => {
