@@ -1,6 +1,7 @@
 import express from 'express'; // Importar el framework Express para crear el servidor
 import dotenv from 'dotenv'; // Importar dotenv para manejar variables de entorno desde el archivo .env
 import cors from 'cors'; // Importar el middleware CORS para permitir peticiones desde diferentes dominios
+import fileUpload from 'express-fileupload'; //importar el middleware express-fileupload dentro de tu aplicación de Express.
 
 // Importar las rutas definidas para diferentes entidades
 import userRoutes from './routes/user.js';
@@ -17,12 +18,23 @@ const app = express(); // Crear la instancia de la aplicación Express
 app.use(express.json()); // Middleware: Permite que Express entienda datos en formato JSON en las peticiones
 app.use(cors()) // Middleware: Habilita CORS para permitir peticiones desde frontends en otros dominios
 app.use(express.static(`public`)) //sirve para decirle a Express que sirva archivos estáticos desde la carpeta public.
+app.use(fileUpload({
+  useTempFiles: true,
+  tempFileDir: '/tmp/',
+  createParentPath: true
+}))
 
 // Configurar las rutas de la API con sus respectivos endpoints
 app.use('/inventario/user', userRoutes);
 app.use('/inventario/customer', customerRoutes);
-app.use('/inventario/product',productsRoutes);
+app.use('/inventario/product', productsRoutes);
 app.use('/inventario/sale', salesroutes);
+
+
+
+import uploadRoutes from "./routes/upload.js";
+app.use("/inventario", uploadRoutes);
+
 
 // Iniciar el servidor y hacer que escuche en el puerto especificado
 app.listen(process.env.PORT, () => {
