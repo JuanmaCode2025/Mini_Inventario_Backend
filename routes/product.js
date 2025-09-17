@@ -1,10 +1,12 @@
 import express from 'express';
-import { 
-    create_product, 
+import {
+    create_product,
     Productlist,
-    buscar_producto, 
+    buscar_producto,
     product_edit,
-    delete_producto 
+    putActivarProducto,
+    putDesactivarProducto,
+    delete_producto
 } from '../controllers/product.js';
 import { validarJWT } from '../middlewares/token.js';
 import { validarCampos } from '../middlewares/validarcampos.js';
@@ -13,8 +15,28 @@ import { check } from 'express-validator';
 
 const router = express.Router();
 
+
+router.put("activarProducto/:id", [
+    validarJWT,
+    [
+        check("id").isMongoId(),
+        validarCampos
+    ],
+    putActivarProducto
+]);
+
+router.put("desactivarProducto/:id", [
+    validarJWT,
+    [
+        check("id").isMongoId(),
+        validarCampos
+    ],
+    putDesactivarProducto
+]);
+
+
 router.post('/createproduct',
-     validarJWT,
+    validarJWT,
     [
         check('barcode').custom(ProductHelpers.validateBarcode),
         check('name').custom(ProductHelpers.validateName),
@@ -27,7 +49,7 @@ router.post('/createproduct',
     create_product
 );
 
-router.get('/listar', 
+router.get('/listar',
     validarJWT,
     Productlist
 );

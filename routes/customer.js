@@ -1,23 +1,42 @@
 import express from 'express'
-import{createCustomer, listCustomers, getCustomer, updateCustomer,deleteCustomer} from '../controllers/customer.js'
+import { createCustomer, listCustomers, getCustomer, updateCustomer, putDesactivarCustomer, putActivarCustomer, deleteCustomer } from '../controllers/customer.js'
 import { validarJWT } from '../middlewares/token.js'
 import { check } from 'express-validator';
 import { validarCampos } from '../middlewares/validarcampos.js';
 import { customerHelpers } from '../helpers/customer.js';
 
 //import { RecommendationEngine } from '../helpers/recommendationHelper.js';
-import {recomendar} from '../api.js';
+import { recomendar } from '../api.js';
 //anrere
 
-const router =express.Router();
+const router = express.Router();
 
 
 router.get('/reconmedar',
-     recomendar
+    recomendar
 );
 
+router.put("activarCustomer/:id", [
+    validarJWT,
+    [
+        check("id").isMongoId(),
+        validarCampos
+    ],
+    putActivarCustomer
+]);
+
+router.put("desactivarCustomer/:id", [
+    validarJWT, 
+    [
+        check("id").isMongoId(),
+        validarCampos
+    ],
+    putDesactivarCustomer
+]);
+
+
 // Crear cliente
-router.post('/createcustomer', 
+router.post('/createcustomer',
     validarJWT,
     [
         check('document', 'El documento es requerido').not().isEmpty(),
@@ -37,8 +56,8 @@ router.post('/createcustomer',
 
 // Listar clientes (con paginación)
 router.get('/lista/listcustomer',
- validarJWT,
-  listCustomers
+    validarJWT,
+    listCustomers
 );
 
 // Obtener cliente por ID
@@ -68,7 +87,7 @@ router.put('/putcustomer/:id',  // Cambiado de :id a :document
 
 // Eliminar cliente por documento (soft delete)
 router.delete('/delete/:document',
-   // validarJWT,
+    // validarJWT,
     [
         check('document').custom(customerHelpers.existCustomer),
         validarCampos

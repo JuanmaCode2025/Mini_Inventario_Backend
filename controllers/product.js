@@ -39,15 +39,15 @@ export const create_product = async (req, res) => {
 
 export const Productlist = async (req, res) => {
     try {
-        const productos = await Producto.find({});
+        const Producto = await Producto.find({});
         res.status(200).json({
-            total: productos.length,
-            productos
+            total: Producto.length,
+            Producto
         });
     } catch (error) {
         console.error(error);
         res.status(500).json({ 
-            msg: "Error al obtener productos",
+            msg: "Error al obtener Producto",
             error: error.message 
         });
     }
@@ -69,7 +69,7 @@ export const buscar_producto = async (req, res) => {
 // Controlador para editar un producto existente
 export const product_edit = async (req, res) => {
     try {
-        // Extrae el ID del producto desde los parámetros de la URL (ej: /productos/:id)
+        // Extrae el ID del producto desde los parámetros de la URL (ej: /Producto/:id)
         const { id } = req.params;
 
         // Datos enviados por el cliente para actualizar (por ejemplo, { name, price, stock, etc. })
@@ -148,6 +148,43 @@ export const product_edit = async (req, res) => {
         });
     }
 };
+
+export const putActivarProducto = async (req, res)=>{
+    const {id} = req.params
+    const buscar = await Producto.findOne({_id:id})
+    try {
+        if (!buscar){
+        res.status(400).json({msg: "Este producto no existe"})
+    }else{
+        await Producto.findByIdAndUpdate({_id:id},{
+            estado:1
+        })
+        res.status(200).json({ msg: "Producto activo", buscar })
+    }
+    } catch (error) {
+        res.status(400).json(error)
+    }
+    
+}
+
+export const putDesactivarProducto = async (req, res)=>{
+    const {id} = req.params
+    const buscar = await Producto.findOne({_id:id})
+    try {
+        if (!buscar){
+        res.status(400).json({msg: "Este producto no existe"})
+    }else{
+        await Producto.findByIdAndUpdate({_id:id},{
+            estado:0
+        })
+        res.status(200).json({ msg: "Producto inactivo", buscar })
+    }
+    } catch (error) {
+        res.status(400).json(error)
+    }
+    
+}
+
 
 
 export const delete_producto = async (req, res) => {

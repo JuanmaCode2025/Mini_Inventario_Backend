@@ -89,6 +89,42 @@ export const getCustomer = async (req, res) => {
   }
 };
 
+export const putActivarCustomer = async (req, res)=>{
+    const {id} = req.params
+    const buscar = await Cliente.findOne({_id:id})
+    try {
+        if (!buscar){
+        res.status(400).json({msg: "Este Cliente no existe"})
+    }else{
+        await Cliente.findByIdAndUpdate({_id:id},{
+            estado:1
+        })
+        res.status(200).json({ msg: "Cliente Activo", buscar })
+    }
+    } catch (error) {
+        res.status(400).json(error)
+    }
+    
+}
+
+export const putDesactivarCustomer = async (req, res)=>{
+    const {id} = req.params
+    const buscar = await Cliente.findOne({_id:id})
+    try {
+        if (!buscar){
+        res.status(400).json({msg: "Este Cliente no existe"})
+    }else{
+        await Cliente.findByIdAndUpdate({_id:id},{
+            estado:0
+        })
+        res.status(200).json({ msg: "Cliente inactivo", buscar })
+    }
+    } catch (error) {
+        res.status(400).json(error)
+    }
+    
+}
+
 
 // Controlador para actualizar la información de un cliente
 export const updateCustomer = async (req, res) => {
