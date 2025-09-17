@@ -39,10 +39,10 @@ export const create_product = async (req, res) => {
 
 export const Productlist = async (req, res) => {
     try {
-        const Producto = await Producto.find({});
+        const listProductos = await Producto.find({});
         res.status(200).json({
             total: Producto.length,
-            Producto
+            listProductos
         });
     } catch (error) {
         console.error(error);
