@@ -68,51 +68,99 @@ export const buscar_producto = async (req, res) => {
 
 export const product_edit = async (req, res) => {
     try {
-        const { barcode } = req.params;
-        const datosActualizados = req.body;
+        const { id } = req.params;
+        const nuevosDatos = req.body;
         const productoActual = req.productDB;
 
-        const updates = {};
-        const needsUpdate = {};
+        // OBJETOS PARA ACTUALIZACIONES
+        const camposDirectos = {};     // Campos que vienen del frontend
+        const camposGenerados = {};    // Campos generados por IA
 
-        // Campos básicos
-        if (datosActualizados.name) updates.name = datosActualizados.name;
-        if (datosActualizados.name) updates.details = datosActualizados.details
-        if (datosActualizados.category) updates.category = datosActualizados.category;
-        if (datosActualizados.price) updates.price = datosActualizados.price;
-        if (datosActualizados.stock) updates.stock = datosActualizados.stock;
+        // 1. ACTUALIZAR CAMPOS DIRECTOS (si fueron enviados)
+        if (nuevosDatos.barcode !== undefined) camposDirectos.barcode = nuevosDatos.barcode;
+        if (nuevosDatos.name !== undefined) camposDirectos.name = nuevosDatos.name;
+        if (nuevosDatos.details !== undefined) camposDirectos.details = nuevosDatos.details;
+        if (nuevosDatos.category !== undefined) camposDirectos.category = nuevosDatos.category;
+        if (nuevosDatos.price !== undefined) camposDirectos.price = nuevosDatos.price;
+        if (nuevosDatos.stock !== undefined) camposDirectos.stock = nuevosDatos.stock;
 
-        // Actualizaciones IA
-        if (datosActualizados.price || datosActualizados.stock) {
-            needsUpdate.recommendationPrice = await generarRecomendacionPrecio(
-                updates.name || productoActual.name,
-                updates.price || productoActual.price,
-                updates.stock || productoActual.stock
-            );
+        // 2. GENERAR CAMPOS AUTOMÁTICOS CON IA
+        // Precio recomendado si cambia precio o stock
+        if (nuevosDatos.price !== undefined || nuevosDatos.stock !== undefined) {
+            const nombre = nuevosDatos.name || productoActual.name;
+            const precio = nuevosDatos.price !== undefined ? nuevosDatos.price : productoActual.price;
+            const stock = nuevosDatos.stock !== undefined ? nuevosDatos.stock : productoActual.stock;
+            
+            camposGenerados.recommendationPrice = await generarRecomendacionPrecio(nombre, precio, stock);
         }
 
-        if (datosActualizados.name || datosActualizados.category) {
-            needsUpdate.description = await generarDescripcion(
-                updates.name || productoActual.name,
-                updates.category || productoActual.category
-            );
+        // Descripción si cambia nombre o categoría
+        if (nuevosDatos.name !== undefined || nuevosDatos.category !== undefined) {
+            const nombre = nuevosDatos.name || productoActual.name;
+            const categoria = nuevosDatos.category || productoActual.category;
+            
+            camposGenerados.description = await generarDescripcion(nombre, categoria);
         }
 
-        const productoActualizado = await Producto.findOneAndUpdate(
-            { barcode: Number(barcode) },
-            { ...updates, ...needsUpdate },
-            { new: true, runValidators: true }
+        // 3. COMBINAR Y ACTUALIZAR
+        const todosLosCambios = { ...camposDirectos, ...camposGenerados };
+
+        // Verificar que hay algo que actualizar
+        if (Object.keys(todosLosCambios).length === 0) {
+            return res.status(400).json({
+                msg: "No se enviaron datos para actualizar",
+                producto: productoActual
+            });
+        }
+
+        // 4. EJECUTAR ACTUALIZACIÓN EN BASE DE DATOS
+        const productoActualizado = await Producto.findByIdAndUpdate(
+            id,  // Usar el ID del parámetro
+            todosLosCambios,
+            { 
+                new: true,            // Devuelve el documento actualizado
+                runValidators: true   // Ejecuta validaciones del schema
+            }
         );
-        
+
+        // Verificar si se encontró y actualizó el producto
+        if (!productoActualizado) {
+            return res.status(404).json({ 
+                msg: "Producto no encontrado" 
+            });
+        }
+
+        // 5. RESPUESTA EXITOSA
         res.status(200).json({
-            msg: "Producto actualizado",
-            producto: productoActualizado
+            msg: "Producto actualizado correctamente",
+            producto: productoActualizado,
+            cambios: {
+                directos: Object.keys(camposDirectos),
+                generados: Object.keys(camposGenerados)
+            }
         });
+
     } catch (error) {
-        console.error(error);
+        console.error("Error en product_edit:", error);
+        
+        // Manejar errores específicos
+        if (error.name === 'ValidationError') {
+            return res.status(400).json({ 
+                msg: "Error de validación de datos",
+                error: error.message 
+            });
+        }
+        
+        if (error.name === 'CastError') {
+            return res.status(400).json({ 
+                msg: "ID de producto inválido" 
+            });
+        }
+
+        // Error general
         res.status(500).json({ 
-            msg: "Error al actualizar producto",
-            error: error.message
+            msg: "Error interno del servidor al actualizar producto",
+            error: error.message 
         });
     }
 };
