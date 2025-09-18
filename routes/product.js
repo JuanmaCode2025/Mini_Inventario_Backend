@@ -65,12 +65,14 @@ router.get('/obtener/:barcode',
 
 router.put('/edit/:id',
     validarJWT,
-    [   check('id').isMongoId().withMessage("ID de producto inválido"),
-        check('barcode').custom(ProductHelpers.existProductByBarcode),
+    [
+        check('id').isMongoId().withMessage("ID de producto inválido"),
+        check('barcode').optional().custom(ProductHelpers.validateBarcodeUniqueness),  // Usar el NUEVO validador para barcode (unicidad)
         check('name').optional().custom(ProductHelpers.validateName),
         check('category').optional().custom(ProductHelpers.validateCategory),
         check('price').optional().custom(ProductHelpers.validatePrice),
         check('stock').optional().custom(ProductHelpers.validateStock),
+        check('details').optional().custom(ProductHelpers.validateDetails),
         validarCampos
     ],
     product_edit
