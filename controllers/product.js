@@ -77,6 +77,7 @@ export const product_edit = async (req, res) => {
 
         // Campos básicos
         if (datosActualizados.name) updates.name = datosActualizados.name;
+        if (datosActualizados.name) updates.details = datosActualizados.details
         if (datosActualizados.category) updates.category = datosActualizados.category;
         if (datosActualizados.price) updates.price = datosActualizados.price;
         if (datosActualizados.stock) updates.stock = datosActualizados.stock;
