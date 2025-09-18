@@ -63,7 +63,7 @@ router.get('/obtener/:barcode',
     buscar_producto
 );
 
-router.put('/edit/:id',
+router.put('/edit/:barcode',
     validarJWT,
     [
         check('barcode').custom(ProductHelpers.existProductByBarcode),
