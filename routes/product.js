@@ -16,23 +16,23 @@ import { check } from 'express-validator';
 const router = express.Router();
 
 
-router.put("activarProducto/:id", [
+router.put("/activarProducto/:id", 
     validarJWT,
     [
         check("id").isMongoId(),
         validarCampos
     ],
     putActivarProducto
-]);
+);
 
-router.put("desactivarProducto/:id", [
+router.put("/desactivarProducto/:id", 
     validarJWT,
     [
         check("id").isMongoId(),
         validarCampos
     ],
     putDesactivarProducto
-]);
+);
 
 
 router.post('/createproduct',
@@ -79,7 +79,7 @@ router.put('/edit/:id',
 );
 
 router.delete('/eliminar/:barcode',
-    // validarJWT,
+    validarJWT,
     [
         check('barcode').custom(ProductHelpers.existProductByBarcode),
         validarCampos

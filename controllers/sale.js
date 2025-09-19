@@ -15,7 +15,6 @@ export const registerSale = async (req, res) => {
         // 2. Procesar productos
         const productosVenta = [];
         let total = 0;
-        const productosComprados = []; // Para la respuesta
 
         for (const item of products) {
             SaleValidators.validateQuantity(item.cantidad);
@@ -24,22 +23,10 @@ export const registerSale = async (req, res) => {
             const subtotal = producto.price * item.cantidad;
             total += subtotal;
 
-            // Para la venta
             productosVenta.push({
                 product: producto._id,
                 cantidad: item.cantidad,
-                precioUnitario: producto.price,
-                barcode: producto.barcode,
-                nombre: producto.name
-            });
-
-            // Para la respuesta
-            productosComprados.push({
-                barcode: producto.barcode,
-                name: producto.name,
-                cantidad: item.cantidad,
-                precioUnitario: producto.price,
-                subtotal
+                precioUnitario: producto.price
             });
         }
 
@@ -62,26 +49,22 @@ export const registerSale = async (req, res) => {
         );
 
         await nuevaVenta.save();
-        // registro al cliente
+        
+        // Registrar en el historial del cliente
         await Cliente.findByIdAndUpdate(
             cliente._id,
             { $push: { purchaseHistory: nuevaVenta._id } }
         );
 
-        // 5. Formatear respuesta
+        // 5. Respuesta con TODA la información
+        const ventaCompleta = await Venta.findById(nuevaVenta._id)
+            .populate('cliente')
+            .populate('products.product');
+
         res.status(201).json({
             success: true,
-            data: {
-                ventaId: nuevaVenta._id,
-                cliente: {
-                    document: cliente.document,
-                    name: cliente.name
-                },
-                productos: productosComprados,
-                total,
-                metodoPago,
-                fecha: nuevaVenta.createdAt
-            }
+            msg: "Venta registrada exitosamente",
+            data: ventaCompleta
         });
 
     } catch (error) {
@@ -92,58 +75,38 @@ export const registerSale = async (req, res) => {
     }
 };
 
-// 2. Listar Ventas
+// 2. Listar Todas las Ventas
 export const listSales = async (req, res) => {
     try {
         const ventas = await Venta.find()
-            .sort({ createdAt: -1 })
-            .populate({
-                path: 'cliente',
-                select: 'document name -_id' // Solo documento y nombre, excluyendo _id
-            })
-            .populate({
-                path: 'products.product',
-                select: 'barcode name -_id' // Solo barcode y nombre del producto
-            });
+            .populate('cliente') // Todos los campos del cliente
+            .populate('products.product'); // Todos los campos del producto
 
-        // Formatear la respuesta
-        const ventasFormateadas = ventas.map(venta => ({
-            id: venta._id,
-            fecha: venta.createdAt,
-            cliente: {
-                document: venta.cliente.document,
-                name: venta.cliente.name
-            },
-            productos: venta.products.map(item => ({
-                barcode: item.product.barcode,
-                name: item.product.name,
-                cantidad: item.cantidad,
-                precioUnitario: item.precioUnitario,
-                subtotal: item.cantidad * item.precioUnitario
-            })),
-            total: venta.total,
-            metodoPago: venta.metodoPago
-        }));
+        // Calcular el TOTAL GENERAL de todas las ventas
+        const totalGeneral = ventas.reduce((sum, venta) => sum + venta.total, 0);
 
-        res.json({
+        res.status(200).json({ 
             success: true,
-            count: ventas.length,
-            data: ventasFormateadas
+            msg: "Lista de ventas obtenida exitosamente", 
+            data: ventas, // ← TODA la información sin procesar
+            totalVentas: totalGeneral,
+            cantidadVentas: ventas.length
         });
 
     } catch (error) {
-        res.status(500).json({
+        res.status(500).json({ 
             success: false,
-            message: 'Error al listar ventas',
-            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+            msg: "Error interno del servidor" 
         });
     }
 };
+
 // 3. Obtener Venta Específica
 export const getSale = async (req, res) => {
     try {
         const venta = await Venta.findById(req.params.id)
-            .populate('cliente', 'document nombre');
+            .populate('cliente')
+            .populate('products.product');
 
         if (!venta) {
             return res.status(404).json({
@@ -154,9 +117,8 @@ export const getSale = async (req, res) => {
 
         res.json({
             success: true,
-            data: venta,
-            clienteDocumento: venta.cliente.document,
-            clienteNombre: venta.cliente.nombre
+            msg: "Venta encontrada",
+            data: venta // ← TODA la información
         });
 
     } catch (error) {
@@ -170,45 +132,32 @@ export const getSale = async (req, res) => {
 // 4. Ventas por Cliente
 export const getSalesByClient = async (req, res) => {
     try {
-        // 1. Validar y obtener el cliente
-        const cliente = await SaleValidators.validateDocument(req.params.document);
+        const { document } = req.params;
 
-        // 2. Buscar las ventas del cliente
+        // Buscar cliente
+        const cliente = await Cliente.findOne({ document: Number(document) });
+        if (!cliente) {
+            return res.status(404).json({
+                success: false,
+                message: 'Cliente no encontrado'
+            });
+        }
+
+        // Buscar ventas del cliente
         const ventas = await Venta.find({ cliente: cliente._id })
-            .select('-__v -createdAt -updatedAt') // Excluir campos innecesarios
-            .populate({
-                path: 'products.product',
-                select: 'nombre precio -_id' // Solo nombre y precio del producto
-            })
-            .lean(); // Convertir a objeto plano
+            .populate('cliente')
+            .populate('products.product');
 
-        // 3. Formatear la respuesta
-        const response = {
+        res.json({
             success: true,
-            cliente: {
-                document: cliente.document,
-                nombre: cliente.nombre
-            },
-            totalVentas: ventas.length,
-            ventas: ventas.map(venta => ({
-                id: venta._id,
-                fecha: venta.fecha,
-                total: venta.total,
-                metodoPago: venta.metodoPago,
-                productos: venta.products.map(producto => ({
-                    nombre: producto.product.nombre,
-                    cantidad: producto.cantidad,
-                    precioUnitario: producto.precioUnitario,
-                    subtotal: producto.cantidad * producto.precioUnitario
-                }))
-            }))
-        };
-
-        res.json(response);
+            msg: "Ventas del cliente",
+            cliente: cliente,
+            data: ventas, // ← TODAS las ventas con toda la información
+            totalVentasCliente: ventas.length
+        });
 
     } catch (error) {
-        const statusCode = error.message.includes('no encontrado') ? 404 : 500;
-        res.status(statusCode).json({
+        res.status(500).json({
             success: false,
             message: error.message
         });
@@ -218,19 +167,62 @@ export const getSalesByClient = async (req, res) => {
 // 5. Ventas por Producto
 export const getSalesByProduct = async (req, res) => {
     try {
-        const { barcode, desde, hasta } = req.body;
-        const filtro = { 'products.barcode': barcode };
+        const { barcode } = req.params;
+        const { desde, hasta } = req.query;
+
+        const filtro = { 
+            'products.product': await Producto.findOne({ barcode: Number(barcode) })
+        };
 
         if (desde || hasta) {
-            filtro.fecha = {};
-            if (desde) filtro.fecha.$gte = new Date(desde);
-            if (hasta) filtro.fecha.$lte = new Date(hasta);
+            filtro.createdAt = {};
+            if (desde) filtro.createdAt.$gte = new Date(desde);
+            if (hasta) filtro.createdAt.$lte = new Date(hasta);
         }
 
-        const ventas = await Venta.find(filtro);
-        res.json({ success: true, data: ventas });
+        const ventas = await Venta.find(filtro)
+            .populate('cliente')
+            .populate('products.product');
+
+        const producto = await Producto.findOne({ barcode: Number(barcode) });
+
+        res.json({ 
+            success: true, 
+            msg: "Ventas del producto",
+            producto: producto,
+            data: ventas // ← TODAS las ventas con toda la información
+        });
+
     } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+        res.status(500).json({ 
+            success: false, 
+            message: error.message 
+        });
     }
 };
 
+// 6. Eliminar Venta (si es necesario)
+export const deleteSale = async (req, res) => {
+    try {
+        const venta = await Venta.findByIdAndDelete(req.params.id);
+        
+        if (!venta) {
+            return res.status(404).json({
+                success: false,
+                message: 'Venta no encontrada'
+            });
+        }
+
+        res.json({
+            success: true,
+            msg: "Venta eliminada exitosamente",
+            data: venta
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};

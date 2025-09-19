@@ -1,7 +1,4 @@
 import Cliente from "../models/cliente.js";
-import Producto from "../models/producto.js";
-import Venta from "../models/venta.js";
-import mongoose from 'mongoose';
 //import { generarRecomendaciones } from "../api.js";
 import { matchedData } from 'express-validator';
 
@@ -90,73 +87,107 @@ export const getCustomer = async (req, res) => {
 };
 
 export const putActivarCustomer = async (req, res)=>{
-    const {id} = req.params
-    const buscar = await Cliente.findOne({_id:id})
+    const { id } = req.params;    
     try {
-        if (!buscar){
-        res.status(400).json({msg: "Este Cliente no existe"})
-    }else{
-        await Cliente.findByIdAndUpdate({_id:id},{
-            estado:1
-        })
-        res.status(200).json({ msg: "Cliente Activo", buscar })
-    }
+        const buscar = await Cliente.findOne({ _id: id });        
+        if (!buscar) {
+            return res.status(404).json({ msg: "Este Cliente no existe" });
+        }        
+        // Verificar si ya está inactivo
+        if (buscar.status === 1) {
+            return res.status(400).json({ msg: "El Cliente ya está activo" });
+        }        
+        const productoActualizado = await Cliente.findByIdAndUpdate(
+            id,
+            { status: 1 },
+            { new: true } // Devuelve el documento actualizado
+        );        
+        res.status(200).json({ 
+            msg: "Cliente Activado exitosamente",
+            producto: productoActualizado 
+        });        
     } catch (error) {
-        res.status(400).json(error)
-    }
-    
+        console.log(error);
+        
+        console.log("Error al activar producto:", error);
+        res.status(500).json({ 
+            msg: "Error interno del servidor",
+            error: error.message 
+        });
+    }    
 }
 
 export const putDesactivarCustomer = async (req, res)=>{
-    const {id} = req.params
-    const buscar = await Cliente.findOne({_id:id})
+ const { id } = req.params;    
     try {
-        if (!buscar){
-        res.status(400).json({msg: "Este Cliente no existe"})
-    }else{
-        await Cliente.findByIdAndUpdate({_id:id},{
-            estado:0
-        })
-        res.status(200).json({ msg: "Cliente inactivo", buscar })
-    }
+        const buscar = await Cliente.findOne({ _id: id });        
+        if (!buscar) {
+            return res.status(404).json({ msg: "Este Cliente no existe" });
+        }        
+        // Verificar si ya está inactivo
+        if (buscar.status === 0) {
+            return res.status(400).json({ msg: "El Cliente ya está Desactivo" });
+        }        
+        const productoActualizado = await Cliente.findByIdAndUpdate(
+            id,
+            { status: 0 },
+            { new: true } // Devuelve el documento actualizado
+        );        
+        res.status(200).json({ 
+            msg: "Cliente Desactivado exitosamente",
+            producto: productoActualizado 
+        });        
     } catch (error) {
-        res.status(400).json(error)
-    }
-    
+        console.log(error);
+        
+        console.log("Error al desactivar producto:", error);
+        res.status(500).json({ 
+            msg: "Error interno del servidor",
+            error: error.message 
+        });
+    }   
 }
 
 
 // Controlador para actualizar la información de un cliente
 export const updateCustomer = async (req, res) => {
   try {
-    // Obtenemos el cliente actual desde el middleware (req.customerDB)
-    const customer = req.customerDB;
+    const { id } = req.params;
 
-    // Si no se encontró el cliente previamente, responder con error 404
-    if (!customer) {
+    // Verificar que el cliente existe
+    const customerExists = await Cliente.findById(id);
+    if (!customerExists) {
       return res.status(404).json({
         success: false,
         message: 'Cliente no encontrado'
       });
     }
 
-    // matchedData filtra y sanitiza los campos que pasaron las validaciones de express-validator
+    // Obtener datos validados
     const cleanData = matchedData(req);
-
-    // _id nunca debe ser actualizado, lo eliminamos por seguridad
+    
+    // Eliminar campos que no deben actualizarse
     delete cleanData._id;
+    delete cleanData.id;
 
-    // Actualizamos el cliente usando su _id (ya que puede cambiar el document)
+    // Si no hay datos para actualizar
+    if (Object.keys(cleanData).length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'No se proporcionaron datos para actualizar'
+      });
+    }
+
+    // Actualizar el cliente
     const updatedCustomer = await Cliente.findByIdAndUpdate(
-      customer._id,           // ID del cliente que no cambia nunca
-      cleanData,              // Datos limpios y validados a actualizar
+      id,
+      cleanData,
       {
         new: true,            // Retorna el documento actualizado
-        runValidators: true   // Aplica las validaciones del modelo Mongoose
+        runValidators: true   // Aplica validaciones del modelo
       }
-    ).select('-__v -password'); // Excluye los campos __v y password en la respuesta
+    ).select('-__v -password'); // Excluir campos sensibles
 
-    // Respuesta exitosa con el cliente actualizado
     res.status(200).json({
       success: true,
       message: 'Cliente actualizado correctamente',
@@ -164,8 +195,24 @@ export const updateCustomer = async (req, res) => {
     });
 
   } catch (error) {
-    // Manejo de errores generales (ej: errores del servidor, base de datos, etc.)
     console.error('Error al actualizar cliente:', error);
+
+    // Manejar errores de validación de Mongoose
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({
+        success: false,
+        message: 'Error de validación de datos',
+        errors: Object.values(error.errors).map(err => err.message)
+      });
+    }
+
+    // Manejar errores de duplicados
+    if (error.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        message: 'El documento o email ya existe'
+      });
+    }
 
     res.status(500).json({
       success: false,

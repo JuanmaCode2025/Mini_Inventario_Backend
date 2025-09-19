@@ -16,23 +16,23 @@ router.get('/reconmedar',
     recomendar
 );
 
-router.put("activarCustomer/:id", [
+router.put("/activarCustomer/:id",
     validarJWT,
     [
         check("id").isMongoId(),
         validarCampos
     ],
     putActivarCustomer
-]);
+);
 
-router.put("desactivarCustomer/:id", [
-    validarJWT, 
+router.put("/desactivarCustomer/:id",
+    validarJWT,
     [
         check("id").isMongoId(),
         validarCampos
     ],
     putDesactivarCustomer
-]);
+);
 
 
 // Crear cliente
@@ -71,19 +71,32 @@ router.get('/getcustomer/:document',  // Cambiado de :id a :document para coinci
 );
 
 // Actualizar cliente
-router.put('/putcustomer/:id',  // Cambiado de :id a :document
+router.put('/putcustomer/:id',
     validarJWT,
     [
-        check('id').notEmpty().withMessage('El id el obigatorio'),
-        check('document').custom(customerHelpers.existCustomer), // Valida que el documento exista
-        check('name').optional().custom(customerHelpers.validateName),
-        check('email').optional().custom(customerHelpers.validateEmail),
-        check('phone').optional().custom(customerHelpers.validatePhone),
-        check('address').optional().custom(customerHelpers.validateAddress),
+        check('id')
+            .isMongoId()
+            .withMessage('ID no válido'),
+        check('document')
+            .optional()
+            .custom(customerHelpers.validateDocument),
+        check('name')
+            .optional()
+            .custom(customerHelpers.validateName),
+        check('email')
+            .optional()
+            .custom(customerHelpers.validateEmail),
+        check('phone')
+            .optional()
+            .custom(customerHelpers.validatePhone),
+        check('address')
+            .optional()
+            .custom(customerHelpers.validateAddress),
         validarCampos
     ],
     updateCustomer
 );
+
 
 // Eliminar cliente por documento (soft delete)
 router.delete('/delete/:document',

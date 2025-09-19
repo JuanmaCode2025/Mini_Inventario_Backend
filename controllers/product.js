@@ -165,40 +165,76 @@ export const product_edit = async (req, res) => {
 };
 
 export const putActivarProducto = async (req, res)=>{
-    const {id} = req.params
-    const buscar = await Producto.findOne({_id:id})
+  const { id } = req.params;    
     try {
-        if (!buscar){
-        res.status(400).json({msg: "Este producto no existe"})
-    }else{
-        await Producto.findByIdAndUpdate({_id:id},{
-            estado:1
-        })
-        res.status(200).json({ msg: "Producto activo", buscar })
-    }
+        const buscar = await Producto.findOne({ _id: id });
+        
+        if (!buscar) {
+            return res.status(404).json({ msg: "Este producto no existe" });
+        }
+        
+        // Verificar si ya está inactivo
+        if (buscar.status === 1) {
+            return res.status(400).json({ msg: "El producto ya está activo" });
+        }
+        
+        const productoActualizado = await Producto.findByIdAndUpdate(
+            id,
+            { status: 1 },
+            { new: true } // Devuelve el documento actualizado
+        );
+        
+        res.status(200).json({ 
+            msg: "Producto Activado exitosamente",
+            producto: productoActualizado 
+        });
+        
     } catch (error) {
-        res.status(400).json(error)
-    }
-    
+        console.log(error);
+        
+        console.log("Error al activar producto:", error);
+        res.status(500).json({ 
+            msg: "Error interno del servidor",
+            error: error.message 
+        });
+    }    
 }
 
-export const putDesactivarProducto = async (req, res)=>{
-    const {id} = req.params
-    const buscar = await Producto.findOne({_id:id})
+export const putDesactivarProducto = async (req, res) => {
+    const { id } = req.params;    
     try {
-        if (!buscar){
-        res.status(400).json({msg: "Este producto no existe"})
-    }else{
-        await Producto.findByIdAndUpdate({_id:id},{
-            estado:0
-        })
-        res.status(200).json({ msg: "Producto inactivo", buscar })
-    }
+        const buscar = await Producto.findOne({ _id: id });
+        
+        if (!buscar) {
+            return res.status(404).json({ msg: "Este producto no existe" });
+        }
+        
+        // Verificar si ya está inactivo
+        if (buscar.status === 0) {
+            return res.status(400).json({ msg: "El producto ya está inactivo" });
+        }
+        
+        const productoActualizado = await Producto.findByIdAndUpdate(
+            id,
+            { status: 0 },
+            { new: true } // Devuelve el documento actualizado
+        );
+        
+        res.status(200).json({ 
+            msg: "Producto desactivado exitosamente",
+            producto: productoActualizado 
+        });
+        
     } catch (error) {
-        res.status(400).json(error)
+        console.log(error);
+        
+        console.log("Error al desactivar producto:", error);
+        res.status(500).json({ 
+            msg: "Error interno del servidor",
+            error: error.message 
+        });
     }
-    
-}
+};
 
 
 

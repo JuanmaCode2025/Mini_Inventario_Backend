@@ -6,7 +6,7 @@ import {
     listSales, 
     getSale, 
     getSalesByClient, 
-    getSalesByProduct 
+    getSalesByProduct ,
 } from '../controllers/sale.js';
 import { SaleValidators } from '../helpers/sale.js';
 
